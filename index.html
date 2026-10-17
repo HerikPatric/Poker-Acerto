@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Acerto de Poker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: coluna única estreita, como uma mesa vista de cima. Abas no topo, etapas numeradas na partida, fichas coloridas como único ornamento. */
+:root{
+  --felt:#0e2a22;
+  --felt-2:#143a2e;
+  --felt-3:#0b1f19;
+  --line:#2a5a48;
+  --ink:#ecf1e6;
+  --ink-2:#a9bfb2;
+  --brass:#d8b358;
+  --brass-ink:#241b05;
+  --win:#8be3a8;
+  --lose:#ff9484;
+  --danger:#e5624f;
+  --display:'Bricolage Grotesque','Trebuchet MS',sans-serif;
+  --body:'IBM Plex Sans','Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{
+  background:var(--felt);color:var(--ink);font:400 16px/1.45 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:14px 48px;
+}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.eyebrow{margin:0;font:600 11px var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--brass)}
+h1{margin:2px 0 0;font:800 30px/1.05 var(--display);letter-spacing:-.02em;text-wrap:balance}
+h2{margin:0 0 8px;font:700 17px/1.2 var(--display);letter-spacing:-.01em}
+p{margin:0}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--felt-3);padding:4px;border-radius:12px;border:1px solid var(--line)}
+.tabs button{min-height:44px;border:0;border-radius:9px;background:transparent;color:var(--ink-2);font:600 14px var(--body);cursor:pointer}
+.tabs button.on{background:var(--brass);color:var(--brass-ink)}
+.tabs button:focus-visible,.btn:focus-visible,.sbtn:focus-visible,.pill:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+main{display:flex;flex-direction:column;gap:18px;min-width:0}
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:12px;color:var(--ink-2)}
+.steps li{display:flex;flex-direction:column;gap:4px;padding-top:8px;border-top:3px solid var(--line)}
+.steps li b{font:600 11px var(--mono)}
+.steps li.done{border-top-color:var(--ink-2)}
+.steps li.on{border-top-color:var(--brass);color:var(--brass)}
+.block{display:flex;flex-direction:column;gap:6px}
+.hint,.meta{color:var(--ink-2);font-size:14px}
+.field{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--ink-2)}
+input{width:100%;background:var(--felt-3);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 12px;font:600 20px var(--mono);min-width:0}
+input.text{font:500 16px var(--body)}
+input.qty{width:84px;text-align:right;padding:9px 10px;font-size:18px}
+.drow{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.drow:last-child{border-bottom:0}
+.dinfo{flex:1;min-width:0}
+.dname{font-weight:600}
+.dval{font-size:13px;color:var(--ink-2);font-family:var(--mono)}
+.chip{flex:none;width:38px;height:38px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font:600 12px var(--mono);background:var(--c);color:var(--k);box-shadow:inset 0 0 0 4px var(--c),inset 0 0 0 6px rgba(255,255,255,.55)}
+.c1{--c:#e9e4d6;--k:#1b1b1b}
+.c5{--c:#c8382f;--k:#fff}
+.c25{--c:#2d62b8;--k:#fff}
+.c50{--c:#d98e24;--k:#1b1b1b}
+.c100{--c:#181818;--k:#fff}
+.sum{font-size:14px;color:var(--ink-2);font-family:var(--mono)}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--felt-3);color:var(--ink);font:500 15px var(--body);cursor:pointer}
+.pill[aria-pressed="true"]{background:var(--brass);border-color:var(--brass);color:var(--brass-ink);font-weight:700}
+.addrow{display:flex;gap:8px;margin-top:6px}
+.btn{min-height:48px;padding:0 18px;border-radius:12px;border:1px solid var(--line);background:var(--felt-2);color:var(--ink);font:600 16px var(--body);cursor:pointer;width:100%}
+.btn.primary{background:var(--brass);border-color:var(--brass);color:var(--brass-ink);font-weight:700}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn.ghost{background:transparent}
+.btn.small{width:auto;min-height:44px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.actions{display:flex;flex-direction:column;gap:10px}
+.card{background:var(--felt-2);border:1px solid var(--line);border-radius:14px;padding:14px}
+ul.plist,ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.prow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.pname{font:700 17px var(--display)}
+.pmeta{font-size:13px;color:var(--ink-2);font-family:var(--mono)}
+.stepper{display:flex;align-items:center;gap:10px}
+.sbtn{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--felt-3);color:var(--ink);font:600 22px var(--mono);cursor:pointer}
+.sbtn:disabled{opacity:.35}
+.scount{min-width:24px;text-align:center;font:600 20px var(--mono)}
+.countgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:10px}
+.cell{display:flex;align-items:center;gap:8px;min-width:0}
+.cell input{padding:8px 10px;font-size:18px}
+.cardhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.nom{font:600 14px var(--mono);color:var(--ink-2)}
+.check{padding:12px 14px;border-radius:12px;border:1px solid var(--line);font:500 14px var(--mono);background:var(--felt-3)}
+.check.ok{border-color:var(--win);color:var(--win)}
+.check.bad{border-color:var(--lose);color:var(--lose)}
+.bal{font:600 18px var(--mono);white-space:nowrap}
+.pos{color:var(--win)}
+.neg{color:var(--lose)}
+.zero{color:var(--ink-2)}
+.pays{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.pays li{padding:12px 14px;border-radius:12px;background:var(--felt-3);border:1px solid var(--line)}
+.amt{font:700 17px var(--mono);color:var(--brass)}
+.note{font-size:13px;color:var(--ink-2)}
+.flash{padding:10px 14px;border-radius:10px;background:var(--felt-3);border:1px solid var(--brass);color:var(--brass);font-size:14px}
+.confirm{padding:14px;border-radius:12px;border:1px solid var(--danger);display:flex;flex-direction:column;gap:10px}
+.confirm .row{display:flex;gap:10px}
+.gh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+.gh time{font:600 14px var(--mono)}
+.tag{font:600 12px var(--mono);color:var(--ink-2)}
+.empty{padding:20px 4px;color:var(--ink-2)}
+.minirow{display:flex;justify-content:space-between;gap:8px;padding:4px 0;font-size:15px}
+.tr{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:14px;display:flex;flex-direction:column;gap:4px}
+@media (prefers-reduced-motion:no-preference){.btn,.pill,.tabs button{transition:background .12s,opacity .12s}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Mesa de amigos</p>
+    <h1>Acerto de Poker</h1>
+  </header>
+  <nav class="tabs" id="tabs" aria-label="Seções">
+    <button data-tab="partida">Partida</button>
+    <button data-tab="historico">Histórico</button>
+    <button data-tab="jogadores">Jogadores</button>
+  </nav>
+  <main id="view"></main>
+</div>
+
+<script>
+/*LOGIC-START*/
+const DENOMS=[1,5,25,50,100];
+
+function nominalOf(counts){
+  return DENOMS.reduce((a,d)=>a+d*Math.max(0,parseInt(counts[d],10)||0),0);
+}
+
+function toCents(s){
+  s=String(s).trim().replace(',','.');
+  if(!/^\d+(\.\d{0,2})?$/.test(s)) return NaN;
+  const parts=s.split('.');
+  const frac=((parts[1]||'')+'00').slice(0,2);
+  return parseInt(parts[0],10)*100+parseInt(frac,10);
+}
+
+function money(c){
+  const s=Math.abs(c);
+  const r=Math.floor(s/100);
+  const cc=String(s%100).padStart(2,'0');
+  return (c<0?'-':'')+'R$ '+r+','+cc;
+}
+
+function ceilDiv(a,b){
+  const n=a+b-1;
+  return (n-(n%b))/b;
+}
+
+function settle(buyIn,nominalInit,players){
+  const entries=players.reduce((a,p)=>a+1+p.rebuys,0);
+  const expected=nominalInit*entries;
+  const got=players.reduce((a,p)=>a+p.nominal,0);
+  if(got!==expected) return {ok:false,expected:expected,got:got};
+
+  const rows=players.map(p=>{
+    const invested=buyIn*(1+p.rebuys);
+    const value=ceilDiv(p.nominal*buyIn,nominalInit);
+    return {name:p.name,rebuys:p.rebuys,nominal:p.nominal,invested:invested,value:value,balance:value-invested};
+  });
+
+  // A soma dos arredondamentos sempre fica igual ou acima do total investido.
+  let diff=rows.reduce((a,r)=>a+r.balance,0);
+  const adjust=[];
+  while(diff>0){
+    let idx=-1;
+    for(let i=0;i<rows.length;i++){
+      if(rows[i].balance>0 && (idx<0 || rows[i].balance>rows[idx].balance)) idx=i;
+    }
+    if(idx<0) break;
+    const take=Math.min(diff,rows[idx].balance);
+    rows[idx].balance-=take;
+    diff-=take;
+    adjust.push({name:rows[idx].name,cents:take});
+  }
+
+  const deb=rows.filter(r=>r.balance<0).map(r=>({name:r.name,v:-r.balance}));
+  const cred=rows.filter(r=>r.balance>0).map(r=>({name:r.name,v:r.balance}));
+  const transfers=[];
+  const byDesc=(a,b)=>b.v-a.v;
+  while(deb.length && cred.length){
+    deb.sort(byDesc);
+    cred.sort(byDesc);
+    const d=deb[0], c=cred[0];
+    const amt=Math.min(d.v,c.v);
+    transfers.push({from:d.name,to:c.name,amount:amt});
+    d.v-=amt;
+    c.v-=amt;
+    if(d.v===0) deb.shift();
+    if(c.v===0) cred.shift();
+  }
+
+  return {ok:true,rows:rows,adjust:adjust,transfers:transfers,tie:transfers.length===0};
+}
+/*LOGIC-END*/
+
+const KEY='acerto-poker-v1';
+let db={players:[],games:[],draft:null,selected:[],lastBuyIn:'10',lastQty:{1:7,5:7,25:7,50:7,100:7}};
+let tab='partida';
+const ui={confirm:null,msg:''};
+const view=document.getElementById('view');
+
+function load(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    if(raw){ db=Object.assign(db,JSON.parse(raw)); }
+  }catch(e){}
+}
+function save(){
+  try{ localStorage.setItem(KEY,JSON.stringify(db)); }catch(e){}
+}
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function esc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function signed(c){ return c>0?'+'+money(c):money(c); }
+function balClass(c){ return c>0?'pos':c<0?'neg':'zero'; }
+function fmtDate(iso){
+  try{
+    return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  }catch(e){ return iso; }
+}
+function chip(d){ return '<span class="chip c'+d+'" aria-hidden="true">'+d+'</span>'; }
+
+function stepsBar(cur){
+  const s=[['setup','Preparar'],['play','Em jogo'],['count','Contagem'],['result','Acerto']];
+  const idx=s.findIndex(x=>x[0]===cur);
+  return '<ol class="steps">'+s.map((x,i)=>'<li class="'+(i===idx?'on':i<idx?'done':'')+'"><b>'+(i+1)+'</b>'+x[1]+'</li>').join('')+'</ol>';
+}
+
+function confirmBar(key,text,yesAction,extra){
+  if(ui.confirm!==key) return '';
+  return '<div class="confirm" role="alertdialog"><p>'+text+'</p><div class="row"><button class="btn danger" data-action="'+yesAction+'" '+(extra||'')+'>Confirmar</button><button class="btn ghost" data-action="ask-no">Voltar</button></div></div>';
+}
+
+/* ---------- Partida: preparar ---------- */
+function viewSetup(){
+  const pills=db.players.length
+    ? '<div class="pills">'+db.players.map(p=>'<button class="pill" data-action="toggle-sel" data-id="'+p.id+'" aria-pressed="'+(db.selected.indexOf(p.id)>=0)+'">'+esc(p.name)+'</button>').join('')+'</div>'
+    : '<p class="hint">Nenhum jogador cadastrado ainda. Adicione abaixo.</p>';
+  return stepsBar('setup')+
+  '<section class="block"><h2>Buy-in</h2><label class="field"><span>Valor por jogador, em reais</span><input id="buyin" data-field="buyin" inputmode="decimal" autocomplete="off" value="'+esc(db.lastBuyIn)+'"></label></section>'+
+  '<section class="block"><h2>Fichas de cada jogador no início</h2><div>'+
+  DENOMS.map(d=>'<div class="drow">'+chip(d)+'<div class="dinfo"><div class="dname">Ficha de '+d+'</div><div class="dval" id="val-'+d+'"></div></div><input class="qty" id="q'+d+'" data-qty="'+d+'" inputmode="numeric" autocomplete="off" value="'+(db.lastQty[d]||0)+'" aria-label="Quantidade de fichas de '+d+'"></div>').join('')+
+  '</div><p class="sum" id="nomTotal"></p></section>'+
+  '<section class="block"><h2>Quem joga</h2>'+pills+
+  '<div class="addrow"><input class="text" id="quick" data-enter="quick-add" placeholder="Novo jogador" autocomplete="off" aria-label="Nome do novo jogador"><button class="btn small" data-action="quick-add">Adicionar</button></div></section>'+
+  '<p class="flash" id="setupmsg" hidden></p>'+
+  '<button class="btn primary" data-action="start">Começar partida</button>';
+}
+
+function updateSetupInfo(){
+  const buy=toCents(db.lastBuyIn);
+  const nom=nominalOf(db.lastQty);
+  DENOMS.forEach(d=>{
+    const el=document.getElementById('val-'+d);
+    if(!el) return;
+    if(isNaN(buy)||buy<=0||nom<=0){ el.textContent='valor indefinido'; return; }
+    const r=(buy*d/nom)/100;
+    el.textContent='vale cerca de R$ '+(r<0.1?r.toFixed(4):r.toFixed(2)).replace('.',',');
+  });
+  const t=document.getElementById('nomTotal');
+  if(t) t.textContent='Cada jogador começa com '+nom+' em fichas.';
+}
+
+function setupError(msg){
+  const el=document.getElementById('setupmsg');
+  if(!el) return;
+  el.textContent=msg;
+  el.hidden=false;
+}
+
+function addPlayer(name){
+  name=name.trim();
+  if(!name) return {err:'Digite um nome.'};
+  if(db.players.some(p=>p.name.toLowerCase()===name.toLowerCase())) return {err:'Já existe um jogador com esse nome.'};
+  const p={id:uid(),name:name};
+  db.players.push(p);
+  return {p:p};
+}
+
+function startGame(){
+  const buy=toCents(db.lastBuyIn);
+  const nom=nominalOf(db.lastQty);
+  const sel=db.selected.filter(id=>db.players.some(p=>p.id===id));
+  if(isNaN(buy)||buy<=0){ setupError('Informe um buy-in válido, como 10 ou 7,50.'); return; }
+  if(nom<=0){ setupError('Informe a quantidade de fichas de cada jogador.'); return; }
+  if(sel.length<2){ setupError('Escolha pelo menos 2 jogadores.'); return; }
+  db.draft={
+    step:'play',buyIn:buy,qty:Object.assign({},db.lastQty),nominalInit:nom,startedAt:new Date().toISOString(),
+    players:sel.map(id=>{
+      const p=db.players.find(x=>x.id===id);
+      return {id:id,name:p.name,rebuys:0,counts:{1:'',5:'',25:'',50:'',100:''}};
+    }),
+    result:null
+  };
+  save();
+  render(true);
+}
+
+/* ---------- Partida: em jogo ---------- */
+function viewPlay(){
+  const d=db.draft;
+  const entries=d.players.reduce((a,p)=>a+1+p.rebuys,0);
+  return stepsBar('play')+
+  '<section class="block"><h2>Mesa</h2><p class="meta">Buy-in '+money(d.buyIn)+'. '+d.nominalInit+' em fichas por entrada. '+money(d.buyIn*entries)+' em jogo.</p></section>'+
+  '<section class="block"><h2>Rebuy</h2><p class="hint">Some um rebuy quando o jogador quebrar e comprar fichas de novo.</p>'+
+  '<ul class="plist">'+d.players.map((p,i)=>'<li class="card prow"><div><div class="pname">'+esc(p.name)+'</div><div class="pmeta">Investido '+money(d.buyIn*(1+p.rebuys))+'</div></div><div class="stepper"><button class="sbtn" data-action="rebuy" data-i="'+i+'" data-d="-1" '+(p.rebuys===0?'disabled':'')+' aria-label="Tirar um rebuy de '+esc(p.name)+'">-</button><span class="scount" title="Rebuys">'+p.rebuys+'</span><button class="sbtn" data-action="rebuy" data-i="'+i+'" data-d="1" aria-label="Somar um rebuy de '+esc(p.name)+'">+</button></div></li>').join('')+'</ul></section>'+
+  confirmBar('cancel','Cancelar a partida em andamento? Os rebuys e a contagem se perdem.','cancel-yes')+
+  '<div class="actions"><button class="btn primary" data-action="to-count">Encerrar e contar fichas</button><button class="btn ghost" data-action="ask" data-key="cancel">Cancelar partida</button></div>';
+}
+
+/* ---------- Partida: contagem ---------- */
+function viewCount(){
+  const d=db.draft;
+  return stepsBar('count')+
+  '<section class="block"><h2>Contagem final</h2><p class="hint">Digite quantas fichas de cada tipo cada jogador tem.</p>'+
+  '<ul class="plist">'+d.players.map((p,i)=>'<li class="card"><div class="cardhead"><div class="pname">'+esc(p.name)+'</div><div class="nom">total <span id="tot'+i+'">0</span></div></div><div class="countgrid">'+
+  DENOMS.map(k=>'<label class="cell">'+chip(k)+'<input id="c'+i+'-'+k+'" data-count="'+i+'" data-d="'+k+'" inputmode="numeric" autocomplete="off" placeholder="0" value="'+esc(p.counts[k])+'" aria-label="Fichas de '+k+' de '+esc(p.name)+'"></label>').join('')+
+  '</div></li>').join('')+'</ul></section>'+
+  '<div class="check" id="check"></div>'+
+  '<div class="actions"><button class="btn primary" id="calcBtn" data-action="calc">Calcular acerto</button><button class="btn ghost" data-action="to-play">Voltar para a mesa</button></div>';
+}
+
+function updateCount(){
+  const d=db.draft;
+  if(!d) return;
+  let got=0;
+  d.players.forEach((p,i)=>{
+    const n=nominalOf(p.counts);
+    got+=n;
+    const el=document.getElementById('tot'+i);
+    if(el) el.textContent=n;
+  });
+  const entries=d.players.reduce((a,p)=>a+1+p.rebuys,0);
+  const exp=d.nominalInit*entries;
+  const diff=got-exp;
+  const chk=document.getElementById('check');
+  const btn=document.getElementById('calcBtn');
+  if(chk){
+    chk.className='check '+(diff===0?'ok':'bad');
+    chk.textContent=diff===0
+      ? 'Conferido: '+got+' de '+exp+' em fichas. Pode calcular.'
+      : (diff<0?'Faltam '+(-diff):'Sobram '+diff)+' em fichas. Contado '+got+', esperado '+exp+'.';
+  }
+  if(btn) btn.disabled=diff!==0;
+}
+
+function runCalc(){
+  const d=db.draft;
+  const res=settle(d.buyIn,d.nominalInit,d.players.map(p=>({name:p.name,rebuys:p.rebuys,nominal:nominalOf(p.counts)})));
+  if(!res.ok){ updateCount(); return; }
+  d.result=res;
+  d.step='result';
+  save();
+  render(true);
+}
+
+/* ---------- Partida: acerto ---------- */
+function transfersHtml(list,tie){
+  if(tie) return '<p class="hint">Empate. Ninguém paga ninguém.</p>';
+  return '<ul class="pays">'+list.map(t=>'<li><b>'+esc(t.from)+'</b> paga <span class="amt">'+money(t.amount)+'</span> para <b>'+esc(t.to)+'</b></li>').join('')+'</ul>';
+}
+
+function viewResult(){
+  const d=db.draft, r=d.result;
+  if(!r){ d.step='count'; return viewCount(); }
+  const adj=r.adjust.length?'<p class="note">Ajuste de centavos por arredondamento: '+r.adjust.map(a=>esc(a.name)+' recebe '+money(a.cents)+' a menos').join('; ')+'.</p>':'';
+  return stepsBar('result')+
+  '<section class="block"><h2>Saldo de cada um</h2><ul class="plist">'+
+  r.rows.map(x=>'<li class="card prow"><div><div class="pname">'+esc(x.name)+'</div><div class="pmeta">Investiu '+money(x.invested)+(x.rebuys?' ('+x.rebuys+' rebuy)':'')+'</div></div><div class="bal '+balClass(x.balance)+'">'+signed(x.balance)+'</div></li>').join('')+
+  '</ul></section>'+
+  '<section class="block"><h2>Quem paga quem</h2>'+transfersHtml(r.transfers,r.tie)+adj+'</section>'+
+  '<div class="actions"><button class="btn primary" data-action="save-game">Salvar no histórico</button><button class="btn ghost" data-action="to-count">Voltar para a contagem</button></div>';
+}
+
+function saveGame(){
+  const d=db.draft;
+  if(!d||!d.result) return;
+  const r=d.result;
+  db.games.unshift({
+    id:uid(),date:new Date().toISOString(),buyIn:d.buyIn,qty:d.qty,nominalInit:d.nominalInit,
+    players:r.rows.map(x=>({name:x.name,rebuys:x.rebuys,invested:x.invested,value:x.value,balance:x.balance})),
+    transfers:r.transfers,adjust:r.adjust,tie:r.tie
+  });
+  db.draft=null;
+  tab='historico';
+  ui.msg='Partida salva no histórico.';
+  save();
+  render(true);
+}
+
+/* ---------- Histórico ---------- */
+function viewHistory(){
+  if(!db.games.length) return '<p class="empty">Nenhuma partida salva ainda. Quando você salvar o acerto de uma noite, ela aparece aqui.</p>';
+  return '<ul class="list">'+db.games.map(g=>{
+    return '<li class="card"><div class="gh"><time>'+esc(fmtDate(g.date))+'</time><span class="tag">buy-in '+money(g.buyIn)+'</span></div>'+
+    g.players.map(p=>'<div class="minirow"><span>'+esc(p.name)+(p.rebuys?' <span class="tag">+'+p.rebuys+' rebuy</span>':'')+'</span><span class="bal '+balClass(p.balance)+'" style="font-size:16px">'+signed(p.balance)+'</span></div>').join('')+
+    '<div class="tr">'+(g.tie?'<span>Empate.</span>':g.transfers.map(t=>'<span>'+esc(t.from)+' paga '+money(t.amount)+' para '+esc(t.to)+'</span>').join(''))+'</div>'+
+    confirmBar('game:'+g.id,'Apagar esta partida do histórico?','del-game','data-id="'+g.id+'"')+
+    '<div style="margin-top:10px"><button class="btn ghost small" data-action="ask" data-key="game:'+g.id+'">Apagar partida</button></div></li>';
+  }).join('')+'</ul>';
+}
+
+/* ---------- Jogadores ---------- */
+function viewPlayers(){
+  const list=db.players.length
+    ? '<ul class="list">'+db.players.map(p=>'<li class="card"><div class="prow"><div class="pname">'+esc(p.name)+'</div><button class="btn ghost small" data-action="ask" data-key="player:'+p.id+'">Apagar</button></div>'+confirmBar('player:'+p.id,'Apagar '+esc(p.name)+' do cadastro? As partidas antigas dele continuam no histórico.','del-player','data-id="'+p.id+'"')+'</li>').join('')+'</ul>'
+    : '<p class="empty">Nenhum jogador cadastrado. Adicione os amigos para escolher quem joga a cada partida.</p>';
+  return '<section class="block"><h2>Adicionar jogador</h2><div class="addrow"><input class="text" id="newname" data-enter="add-player" placeholder="Nome" autocomplete="off" aria-label="Nome do jogador"><button class="btn small" data-action="add-player">Adicionar</button></div><p class="flash" id="plmsg" hidden></p></section>'+
+  '<section class="block"><h2>Cadastrados</h2>'+list+'</section>';
+}
+
+/* ---------- Render e eventos ---------- */
+function render(scroll){
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
+  let html='';
+  if(tab==='partida'){
+    const d=db.draft;
+    html=!d?viewSetup():d.step==='play'?viewPlay():d.step==='count'?viewCount():viewResult();
+  }else if(tab==='historico'){ html=viewHistory(); }
+  else{ html=viewPlayers(); }
+  view.innerHTML=(ui.msg?'<p class="flash">'+esc(ui.msg)+'</p>':'')+html;
+  ui.msg='';
+  if(tab==='partida'){
+    if(!db.draft) updateSetupInfo();
+    else if(db.draft.step==='count') updateCount();
+  }
+  if(scroll) window.scrollTo(0,0);
+}
+
+function act(a,ds){
+  switch(a){
+    case 'toggle-sel':{
+      const i=db.selected.indexOf(ds.id);
+      if(i>=0) db.selected.splice(i,1); else db.selected.push(ds.id);
+      save(); render(); break;
+    }
+    case 'quick-add':{
+      const inp=document.getElementById('quick');
+      const r=addPlayer(inp.value);
+      if(r.err){ setupError(r.err); break; }
+      db.selected.push(r.p.id);
+      save(); render(); break;
+    }
+    case 'add-player':{
+      const inp=document.getElementById('newname');
+      const r=addPlayer(inp.value);
+      if(r.err){
+        const m=document.getElementById('plmsg');
+        m.textContent=r.err; m.hidden=false; break;
+      }
+      save(); render(); break;
+    }
+    case 'start': startGame(); break;
+    case 'rebuy':{
+      const p=db.draft.players[parseInt(ds.i,10)];
+      p.rebuys=Math.max(0,p.rebuys+parseInt(ds.d,10));
+      save(); render(); break;
+    }
+    case 'to-count': db.draft.step='count'; db.draft.result=null; save(); render(true); break;
+    case 'to-play': db.draft.step='play'; db.draft.result=null; save(); render(true); break;
+    case 'calc': runCalc(); break;
+    case 'save-game': saveGame(); break;
+    case 'ask': ui.confirm=ds.key; render(); break;
+    case 'ask-no': ui.confirm=null; render(); break;
+    case 'cancel-yes': db.draft=null; ui.confirm=null; save(); render(true); break;
+    case 'del-game': db.games=db.games.filter(g=>g.id!==ds.id); ui.confirm=null; save(); render(); break;
+    case 'del-player':
+      db.players=db.players.filter(p=>p.id!==ds.id);
+      db.selected=db.selected.filter(id=>id!==ds.id);
+      ui.confirm=null; save(); render(); break;
+  }
+}
+
+view.addEventListener('click',e=>{
+  const b=e.target.closest('[data-action]');
+  if(b && !b.disabled) act(b.dataset.action,b.dataset);
+});
+view.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.dataset.field==='buyin'){
+    db.lastBuyIn=t.value; save(); updateSetupInfo();
+  }else if(t.dataset.qty){
+    db.lastQty[t.dataset.qty]=Math.max(0,parseInt(t.value,10)||0); save(); updateSetupInfo();
+  }else if(t.dataset.count!==undefined && db.draft){
+    db.draft.players[parseInt(t.dataset.count,10)].counts[t.dataset.d]=t.value.replace(/\D/g,'');
+    save(); updateCount();
+  }
+});
+view.addEventListener('keydown',e=>{
+  if(e.key==='Enter' && e.target.dataset.enter){
+    e.preventDefault();
+    act(e.target.dataset.enter,{});
+  }
+});
+document.getElementById('tabs').addEventListener('click',e=>{
+  const b=e.target.closest('[data-tab]');
+  if(!b) return;
+  tab=b.dataset.tab; ui.confirm=null; render(true);
+});
+
+load();
+render();
+</script>
+</body>
+</html>
